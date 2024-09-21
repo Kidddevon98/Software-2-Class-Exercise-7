@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PetStore.Logic
 {
-    internal interface IProductLogic
+    public interface IProductLogic
     {
         /// <summary>
         /// Add a product to the stores inventory
@@ -24,7 +24,7 @@ namespace PetStore.Logic
         /// Gets a dog leash by the name of the product
         /// </summary>
         /// <param name="name">The name given to the product.  It can include spaces</param>
-        public DogLeash GetDogLeashByName(string name);
+        public DogLeash? GetDogLeashByName(string name); // Nullable DogLeash
 
         /// <summary>
         /// Get all in stock products

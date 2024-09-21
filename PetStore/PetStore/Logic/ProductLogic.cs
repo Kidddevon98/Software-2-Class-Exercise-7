@@ -1,18 +1,15 @@
-﻿using PetStore.Logic;
-using PetStore.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using PetStore.Models; // Ensure this is here to reference Product, DogLeash, and CatFood
 
-namespace PetStore
+namespace PetStore.Logic
 {
-    internal class ProductLogic : IProductLogic
+    public class ProductLogic : IProductLogic
     {
-        private List<Product> _products;
-        private Dictionary<string, DogLeash> _dogLeash;
-        private Dictionary<string, CatFood> _catFood;
+        private readonly List<Product> _products;
+        private readonly Dictionary<string, DogLeash> _dogLeash;
+        private readonly Dictionary<string, CatFood> _catFood;
 
         public ProductLogic()
         {
@@ -45,48 +42,41 @@ namespace PetStore
                     KittenFood = false
                 }
             };
+
             _dogLeash = new Dictionary<string, DogLeash>();
             _catFood = new Dictionary<string, CatFood>();
         }
 
         public void AddProduct(Product product)
         {
-            if (product is DogLeash)
+            if (product is DogLeash leash && leash != null && leash.Name != null)
             {
-                _dogLeash.Add(product.Name, product as DogLeash);
+                _dogLeash[leash.Name] = leash;
             }
-            if (product is CatFood)
+
+            if (product is CatFood catFood && catFood != null && catFood.Name != null)
             {
-                _catFood.Add(product.Name, product as CatFood);
+                _catFood[catFood.Name] = catFood;
             }
+
             _products.Add(product);
         }
 
-        public List<Product> GetAllProducts()
-        {
-            return _products;
-        }
+        public List<Product> GetAllProducts() => _products;
 
-        public DogLeash GetDogLeashByName(string name)
+        public DogLeash? GetDogLeashByName(string name)
         {
-            try
-            {
-                return _dogLeash[name];
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return _dogLeash.ContainsKey(name) ? _dogLeash[name] : null;
         }
 
         public List<string> GetOnlyInStockProducts()
         {
-            return _products.InStock().Select(x=>x.Name).ToList();
+            return _products.Where(x => x.Quantity > 0).Select(x => x.Name ?? "Unknown Product").ToList();
         }
 
         public decimal GetTotalPriceOfInventory()
         {
-            return _products.InStock().Select(x => x.Price).Sum();
+            return _products.Where(x => x.Quantity > 0).Sum(x => x.Price);
         }
     }
 }

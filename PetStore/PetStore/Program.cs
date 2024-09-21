@@ -1,14 +1,16 @@
-﻿using PetStore;
+﻿using Microsoft.Extensions.DependencyInjection;
+using PetStore;
 using PetStore.Logic;
 using PetStore.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-var productLogic = new ProductLogic();
+var services = CreateServiceCollection();
+var productLogic = services.GetService<IProductLogic>();
 
-string userInput = DisplayMenuAndGetInput();
+string? userInput = DisplayMenuAndGetInput();
 
-while (userInput.ToLower() != "exit")
+while (userInput?.ToLower() != "exit")
 {
     if (userInput == "1")
     {
@@ -17,47 +19,71 @@ while (userInput.ToLower() != "exit")
         Console.WriteLine("Creating a dog leash...");
 
         Console.Write("Enter the material the leash is made out of: ");
-        dogLeash.Material = Console.ReadLine();
+        dogLeash.Material = Console.ReadLine() ?? "Unknown";  // Handle null input
 
         Console.Write("Enter the length in inches: ");
-        dogLeash.LengthInches = int.Parse(Console.ReadLine());
+        if (int.TryParse(Console.ReadLine(), out int length))
+        {
+            dogLeash.LengthInches = length;
+        }
+        else
+        {
+            Console.WriteLine("Invalid input for length. Defaulting to 0.");
+            dogLeash.LengthInches = 0;
+        }
 
         Console.Write("Enter the name of the leash: ");
-        dogLeash.Name = Console.ReadLine();
+        dogLeash.Name = Console.ReadLine() ?? "Unknown";  // Handle null input
 
         Console.Write("Give the product a short description: ");
-        dogLeash.Description = Console.ReadLine();
+        dogLeash.Description = Console.ReadLine() ?? "No description";  // Handle null input
 
         Console.Write("Give the product a price: ");
-        dogLeash.Price = decimal.Parse(Console.ReadLine());
+        if (decimal.TryParse(Console.ReadLine(), out decimal price))
+        {
+            dogLeash.Price = price;
+        }
+        else
+        {
+            Console.WriteLine("Invalid input for price. Defaulting to 0.");
+            dogLeash.Price = 0;
+        }
 
         Console.Write("How many products do you have on hand? ");
-        dogLeash.Quantity = int.Parse(Console.ReadLine());
+        if (int.TryParse(Console.ReadLine(), out int quantity))
+        {
+            dogLeash.Quantity = quantity;
+        }
+        else
+        {
+            Console.WriteLine("Invalid input for quantity. Defaulting to 0.");
+            dogLeash.Quantity = 0;
+        }
 
-        productLogic.AddProduct(dogLeash);
+        productLogic?.AddProduct(dogLeash);  // Null check
         Console.WriteLine("Added a dog leash");
     }
-    if (userInput == "2")
+    else if (userInput == "2")
     {
         Console.Write("What is the name of the dog leash you would like to view? ");
         var dogLeashName = Console.ReadLine();
-        var dogLeash = productLogic.GetDogLeashByName(dogLeashName);
+        var dogLeash = productLogic?.GetDogLeashByName(dogLeashName ?? "");  // Null check
         Console.WriteLine(JsonSerializer.Serialize(dogLeash));
         Console.WriteLine();
     }
-    if (userInput == "3")
+    else if (userInput == "3")
     {
         Console.WriteLine("The following products are in stock: ");
-        var inStock = productLogic.GetOnlyInStockProducts();
-        foreach (var item in inStock)
+        var inStock = productLogic?.GetOnlyInStockProducts();
+        foreach (var item in inStock ?? new List<string>())
         {
             Console.WriteLine(item);
         }
         Console.WriteLine();
     }
-    if (userInput == "4")
+    else if (userInput == "4")
     {
-        Console.WriteLine($"The total price of inventory on hand is {productLogic.GetTotalPriceOfInventory()}");
+        Console.WriteLine($"The total price of inventory on hand is {productLogic?.GetTotalPriceOfInventory()}");
         Console.WriteLine();
     }
 
@@ -71,6 +97,13 @@ static string DisplayMenuAndGetInput()
     Console.WriteLine("Press 3 to view in stock products");
     Console.WriteLine("Press 4 to view the total price of current inventory");
     Console.WriteLine("Type 'exit' to quit");
+    
+    return Console.ReadLine() ?? string.Empty;  // Return user input or an empty string
+}
 
-    return Console.ReadLine();
+static IServiceProvider CreateServiceCollection()
+{
+    return new ServiceCollection()
+        .AddTransient<IProductLogic, ProductLogic>()  // Register ProductLogic
+        .BuildServiceProvider();
 }
